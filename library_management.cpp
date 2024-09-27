@@ -12,17 +12,17 @@ public:
 
     // Function to display book information
     void displayInfo() {
-        cout << "Title: " << title << ", Author: " << author << ", Available: " 
-             << (isAvailable ? "Yes" : "No") << endl;
+        cout << "Title: " << this->title << ", Author: " << this->author << ", Available: " 
+             << (this->isAvailable ? "Yes" : "No") << endl;
     }
 
     // Function to borrow a book
     void borrowBook() {
-        if (isAvailable) {
-            isAvailable = false;
-            cout << title << " has been borrowed. :) " << endl;
+        if (this->isAvailable) {
+            this->isAvailable = false;
+            cout << this->title << " has been borrowed. :) " << endl;
         } else {
-            cout << title << " is currently unavailable. :( " << endl;
+            cout << this->title << " is currently unavailable. :( " << endl;
         }
     }
 };
@@ -37,12 +37,12 @@ public:
 
     // Function to display member information
     void displayMemberInfo() {
-        cout << "Member Name: Hello! " << name << ", Member ID: " << memberID << endl;
+        cout << "Member Name: Hello! " << this->name << ", Member ID: " << this->memberID << endl;
     }
 
     // Function for member to borrow a book
     void borrow(Book &book) {
-        cout << name << " is borrowing a book." << endl;
+        cout << this->name << " is borrowing a book." << endl;
         book.borrowBook();
     }
 };
@@ -51,7 +51,7 @@ int main() {
     // Creating book object
     Book book1("Harry Potter and the Philosopher's Stone", "J.K. Rowling");
 
-    // Creating member object
+    // Creating member objects
     Member member1("Akshit", 101);
     Member member2("Aki", 102);
 
@@ -65,8 +65,12 @@ int main() {
     // Try borrowing the book again
     member1.borrow(book1);
 
-    // Member 2 borrows the book ...........
+    // Member 2 tries to borrow the same book
     member2.borrow(book1);
 
     return 0;
 }
+
+
+
+
