@@ -48,25 +48,37 @@ public:
 };
 
 int main() {
-    // Creating book object
-    Book book1("Harry Potter and the Philosopher's Stone", "J.K. Rowling");
+    // Creating an array of books (array of objects)
+    Book library[3] = { 
+        Book("Harry Potter and the Philosopher's Stone", "J.K. Rowling"), 
+        Book("The Hobbit", "J.R.R. Tolkien"), 
+        Book("1984", "George Orwell") 
+    };
+
+
+    // Displaying information about all books in the array
+    cout << "Books available in the library:" << endl;
+    for (int i = 0; i < 3; ++i) {
+        library[i].displayInfo();
+    }
 
     // Creating member objects
     Member member1("Akshit", 101);
     Member member2("Aki", 102);
 
-    // Display book and member information
-    book1.displayInfo();
+    // Displaying member information
     member1.displayMemberInfo();
+    member2.displayMemberInfo();
 
-    // Member borrows a book
-    member1.borrow(book1);
+    // Member1 borrows a book
+    member1.borrow(library[0]);
 
-    // Try borrowing the book again
-    member1.borrow(book1);
+    // Try borrowing the same book again
+    member2.borrow(library[0]);
 
-    // Member 2 tries to borrow the same book
-    member2.borrow(book1);
+    // Member2 borrows another book
+    member2.borrow(library[2]);
+
 
     return 0;
 }
