@@ -1,4 +1,5 @@
-#include<iostream>
+#include <iostream>
+#include <string>
 using namespace std;
 
 class Book {
@@ -12,8 +13,8 @@ public:
 
     // Function to display book information
     void displayInfo() {
-        cout << "Title: " << this->title << ", Author: " << this->author << ", Available: " 
-             << (this->isAvailable ? "Yes" : "No") << endl;
+        cout << "Title: " << this->title << ", Author: " << this->author 
+             << ", Available: " << (this->isAvailable ? "Yes" : "No") << endl;
     }
 
     // Function to borrow a book
@@ -41,20 +42,19 @@ public:
     }
 
     // Function for member to borrow a book
-    void borrow(Book &book) {
+    void borrow(Book* book) { // Pass pointer to the book
         cout << this->name << " is borrowing a book." << endl;
-        book.borrowBook();
+        book->borrowBook(); // Use arrow operator to access member function
     }
 };
 
 int main() {
-    // Creating an array of books (array of objects)
-    Book library[3] = { 
-        Book("Harry Potter and the Philosopher's Stone", "J.K. Rowling"), 
-        Book("The Hobbit", "J.R.R. Tolkien"), 
-        Book("1984", "George Orwell") 
+    // Dynamically allocating an array of books
+    Book* library = new Book[3]{
+        Book("Harry Potter and the Philosopher's Stone", "J.K. Rowling"),
+        Book("The Hobbit", "J.R.R. Tolkien"),
+        Book("1984", "George Orwell")
     };
-
 
     // Displaying information about all books in the array
     cout << "Books available in the library:" << endl;
@@ -62,27 +62,27 @@ int main() {
         library[i].displayInfo();
     }
 
-    // Creating member objects
-    Member member1("Akshit", 101);
-    Member member2("Aki", 102);
+    // Creating member objects dynamically
+    Member* member1 = new Member("Akshit", 101);
+    Member* member2 = new Member("Aki", 102);
 
     // Displaying member information
-    member1.displayMemberInfo();
-    member2.displayMemberInfo();
+    member1->displayMemberInfo();
+    member2->displayMemberInfo();
 
     // Member1 borrows a book
-    member1.borrow(library[0]);
+    member1->borrow(&library[0]); 
 
     // Try borrowing the same book again
-    member2.borrow(library[0]);
+    member2->borrow(&library[0]); 
 
     // Member2 borrows another book
-    member2.borrow(library[2]);
+    member2->borrow(&library[2]); 
 
+    // Freeing dynamically allocated memory
+    delete[] library;
+    delete member1; 
+    delete member2; 
 
     return 0;
 }
-
-
-
-
