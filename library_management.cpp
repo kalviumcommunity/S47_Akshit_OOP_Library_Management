@@ -54,7 +54,8 @@ public:
         }
     }
 
-    // Static function to display the current number of available and total books
+    /* Static member function created to provide a way to access the count of books
+     without needing an instance of the Book class */
     static void displayBookCounts() {
         cout << "Total books owned by the library: " << totalBooksOwned << endl;
         cout << "Total available books in the library: " << totalAvailableBooks << endl;
@@ -99,7 +100,7 @@ public:
         book->returnBook();
     }
 
-    // Static function to display the total number of members
+    //  Static member function created to provide access to total member count
     static void displayTotalMembers() {
         cout << "Total members registered: " << totalMembers << endl;
     }
