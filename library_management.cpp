@@ -195,6 +195,27 @@ public:
 
 int PremiumMember::totalPremiumMembers = 0;
 
+// New Librarian class to demonstrate OCP
+class Librarian : public Person {
+public:
+    Librarian(string n = "Unknown", int i = 0) : Person(n, i) {}
+
+    void addBook(Book* book) {
+        cout << name << " is adding a new book: " << book->getTitle() << endl;
+        BookTracker::addBook();
+    }
+
+    void removeBook(Book* book) {
+        cout << name << " is removing the book: " << book->getTitle() << endl;
+        BookTracker::removeBook(book->getIsAvailable());
+    }
+
+    void displayInfo() const override {
+        cout << "Librarian Info - ";
+        Person::displayInfo();
+    }
+};
+
 int main() {
     // Create books
     Book book1("The Great Gatsby", "F. Scott Fitzgerald");
@@ -204,11 +225,15 @@ int main() {
     DigitalBook eBook1("Digital Minimalism", "Cal Newport", 2.5, "PDF");
     DigitalBook eBook2("Atomic Habits", "James Clear", 1.8, "ePub");
 
-    // Borrow and return books
-    book1.borrowBook();
-    book1.returnBook();
+    // Create librarian
+    Librarian librarian1("Charles", 201);
+    librarian1.displayInfo();
 
-    // Display book counts using BookTracker
+    // Librarian adds and removes books
+    librarian1.addBook(&book1);
+    librarian1.removeBook(&book2);
+
+    // Display book counts
     BookTracker::displayBookCounts();
 
     return 0;
