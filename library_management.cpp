@@ -1,131 +1,155 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <memory>
+
 using namespace std;
 
-// Abstract class to define the common interface for library entities
-class LibraryEntity {
+// ISP Interfaces
+class IBorrowable {
 public:
-    virtual void displayInfo() const = 0; // Pure virtual function
-    virtual ~LibraryEntity() {}          // Virtual destructor
+    virtual void borrowItem() = 0;
+    virtual void returnItem() = 0;
+    virtual bool isAvailable() const = 0;
+    virtual ~IBorrowable() = default;
 };
 
-// Separate class to track book-related statistics (SRP applied here)
+class IDisplayable {
+public:
+    virtual void displayDetails() const = 0;
+    virtual ~IDisplayable() = default;
+};
+
+class ITrackable {
+public:
+    virtual string getUniqueIdentifier() const = 0;
+    virtual ~ITrackable() = default;
+};
+
+class IMemberManagement {
+public:
+    virtual void registerMember() = 0;
+    virtual void unregisterMember() = 0;
+    virtual ~IMemberManagement() = default;
+};
+
+// Book Tracker Class
 class BookTracker {
     static int totalBooksOwned;
     static int totalAvailableBooks;
 
 public:
-    // Increment book counts
     static void addBook() {
         totalBooksOwned++;
         totalAvailableBooks++;
     }
 
-    // Decrement book counts
     static void removeBook(bool isAvailable) {
         totalBooksOwned--;
         if (isAvailable)
             totalAvailableBooks--;
     }
 
-    // Update available count when a book is borrowed
     static void borrowBook() {
         if (totalAvailableBooks > 0)
             totalAvailableBooks--;
     }
 
-    // Update available count when a book is returned
-    static void returnBook() { totalAvailableBooks++; }
+    static void returnBook() { 
+        totalAvailableBooks++; 
+    }
 
-    // Display book counts
     static void displayBookCounts() {
         cout << "Total books owned by the library: " << totalBooksOwned << endl;
         cout << "Total available books in the library: " << totalAvailableBooks << endl;
     }
 };
 
-// Initialize static variables for BookTracker
+// Initialize static variables
 int BookTracker::totalBooksOwned = 0;
 int BookTracker::totalAvailableBooks = 0;
 
-// Book class now focuses only on managing individual book details
-class Book : public LibraryEntity {
+// Book Class
+class Book : public IBorrowable, public IDisplayable, public ITrackable {
+private:
     string title;
     string author;
-    bool isAvailable;
+    bool available;
+    string isbn;
 
 public:
-    // Default constructor
-    Book() : title("Unknown"), author("Unknown"), isAvailable(true) {
+    Book(string t = "Unknown", string a = "Unknown", string i = "N/A") 
+        : title(t), author(a), available(true), isbn(i) {
         BookTracker::addBook();
     }
 
-    // Parameterized constructor
-    Book(string t, string a) : title(t), author(a), isAvailable(true) {
-        BookTracker::addBook();
+    ~Book() {
+        BookTracker::removeBook(available);
     }
 
-    // Destructor
-    virtual ~Book() {
-        BookTracker::removeBook(isAvailable);
+    // Borrowing Implementation
+    void borrowItem() override {
+        if (available) {
+            available = false;
+            BookTracker::borrowBook();
+            cout << "Book '" << title << "' has been borrowed successfully!" << endl;
+        } else {
+            cout << "Book '" << title << "' is currently unavailable." << endl;
+        }
     }
 
-    // Accessors
+    void returnItem() override {
+        if (!available) {
+            available = true;
+            BookTracker::returnBook();
+            cout << "Book '" << title << "' has been returned successfully!" << endl;
+        } else {
+            cout << "Book '" << title << "' was already in the library." << endl;
+        }
+    }
+
+    bool isAvailable() const override { 
+        return available; 
+    }
+
+    // Display Book Details
+    void displayDetails() const override {
+        cout << "Book Details:" << endl;
+        cout << "   Title: " << title << endl;
+        cout << "   Author: " << author << endl;
+        cout << "   ISBN: " << isbn << endl;
+        cout << "   Status: " << (available ? "Available" : "Borrowed") << endl;
+    }
+
+    // Unique Identifier
+    string getUniqueIdentifier() const override { return isbn; }
+
+    // Getters and Setters
     string getTitle() const { return title; }
     string getAuthor() const { return author; }
-    bool getIsAvailable() const { return isAvailable; }
-
-    // Mutators
     void setTitle(const string& t) { title = t; }
     void setAuthor(const string& a) { author = a; }
-
-    // Borrow a book
-    virtual void borrowBook() {
-        if (isAvailable) {
-            isAvailable = false;
-            BookTracker::borrowBook();
-            cout << title << " has been borrowed. :) " << endl;
-        } else {
-            cout << title << " is currently unavailable. :( " << endl;
-        }
-    }
-
-    // Return a book
-    virtual void returnBook() {
-        if (!isAvailable) {
-            isAvailable = true;
-            BookTracker::returnBook();
-            cout << title << " has been returned. :) " << endl;
-        } else {
-            cout << title << " was not borrowed and is already available. :) " << endl;
-        }
-    }
-
-    // Override displayInfo
-    virtual void displayInfo() const override {
-        cout << "Title: " << title << ", Author: " << author
-             << ", Available: " << (isAvailable ? "Yes" : "No") << endl;
-    }
 };
 
-// Derived class for digital books
+// Digital Book Extension
 class DigitalBook : public Book {
+private:
     double fileSize;
     string format;
 
 public:
-    DigitalBook(string t, string a, double fs, string fmt)
-        : Book(t, a), fileSize(fs), format(fmt) {}
+    DigitalBook(string t, string a, double fs, string fmt, string isbn = "N/A")
+        : Book(t, a, isbn), fileSize(fs), format(fmt) {}
 
-    void displayInfo() const override {
-        Book::displayInfo();
-        cout << "File Size: " << fileSize << " MB, Format: " << format << endl;
+    void displayDetails() const override {
+        Book::displayDetails();
+        cout << "   File Size: " << fileSize << " MB" << endl;
+        cout << "   Format: " << format << endl;
     }
 };
 
-
-class Person : public LibraryEntity {
+// Person Base Class
+class Person : public IMemberManagement, public IDisplayable {
 protected:
     string name;
     int id;
@@ -133,34 +157,49 @@ protected:
 public:
     Person(string n = "Unknown", int i = 0) : name(n), id(i) {}
 
-    virtual ~Person() {}
+    // Member Management
+    virtual void registerMember() override {
+        cout << name << " has been registered successfully!" << endl;
+    }
 
-    virtual void displayInfo() const override {
-        cout << "Name: " << name << ", ID: " << id << endl;
+    virtual void unregisterMember() override {
+        cout << name << " has been unregistered from the library." << endl;
+    }
+
+    // Display Person Details
+    virtual void displayDetails() const override {
+        cout << "Person Details:" << endl;
+        cout << "   Name: " << name << endl;
+        cout << "   ID: " << id << endl;
     }
 
     virtual void borrow(Book* book) {
         cout << name << " is borrowing a book." << endl;
-        book->borrowBook();
+        book->borrowItem();
     }
 
     virtual void returnBook(Book* book) {
         cout << name << " is returning a book." << endl;
-        book->returnBook();
+        book->returnItem();
     }
 };
 
+// Member Classes
 class Member : public Person {
     static int totalMembers;
 
 public:
-    Member(string n = "Unknown", int i = 0) : Person(n, i) { totalMembers++; }
+    Member(string n = "Unknown", int i = 0) : Person(n, i) {
+        totalMembers++;
+    }
 
-    ~Member() { totalMembers--; }
+    ~Member() {
+        totalMembers--;
+    }
 
-    void displayInfo() const override {
-        cout << "Regular Member Info - ";
-        Person::displayInfo();
+    void displayDetails() const override {
+        cout << "Regular Member Details:" << endl;
+        Person::displayDetails();
     }
 
     static void displayTotalMembers() {
@@ -180,12 +219,14 @@ public:
         totalPremiumMembers++;
     }
 
-    ~PremiumMember() { totalPremiumMembers--; }
+    ~PremiumMember() {
+        totalPremiumMembers--;
+    }
 
-    void displayInfo() const override {
-        cout << "Premium Member Info - ";
-        Person::displayInfo();
-        cout << "Subscription Fee: $" << subscriptionFee << endl;
+    void displayDetails() const override {
+        cout << "Premium Member Details:" << endl;
+        Person::displayDetails();
+        cout << "   Subscription Fee: $" << subscriptionFee << endl;
     }
 
     static void displayTotalPremiumMembers() {
@@ -195,46 +236,56 @@ public:
 
 int PremiumMember::totalPremiumMembers = 0;
 
-// New Librarian class to demonstrate OCP
-class Librarian : public Person {
+// Library Management System
+class LibraryManagementSystem {
+private:
+    vector<unique_ptr<Book>> books;
+    vector<unique_ptr<Person>> members;
+
 public:
-    Librarian(string n = "Unknown", int i = 0) : Person(n, i) {}
-
-    void addBook(Book* book) {
-        cout << name << " is adding a new book: " << book->getTitle() << endl;
-        BookTracker::addBook();
+    void addBook(unique_ptr<Book> book) {
+        books.push_back(move(book));
     }
 
-    void removeBook(Book* book) {
-        cout << name << " is removing the book: " << book->getTitle() << endl;
-        BookTracker::removeBook(book->getIsAvailable());
+    void addMember(unique_ptr<Person> member) {
+        members.push_back(move(member));
     }
 
-    void displayInfo() const override {
-        cout << "Librarian Info - ";
-        Person::displayInfo();
+    void simulateLibraryOperations() {
+        cout << "\nComprehensive Library Simulation\n" << endl;
+
+        // Create and add books
+        addBook(make_unique<Book>("Clean Code", "Robert Martin", "ISBN-001"));
+        addBook(make_unique<DigitalBook>("Design Patterns", "Gang of Four", 2.5, "PDF", "ISBN-002"));
+
+        // Create and add members
+        addMember(make_unique<Member>("Alice Johnson", 101));
+        addMember(make_unique<PremiumMember>("Bob Smith", 201, 50.0));
+
+        // Simulate member and book interactions
+        for (auto& member : members) {
+            member->displayDetails();
+            member->registerMember();
+        }
+
+        for (auto& book : books) {
+            book->displayDetails();
+            
+            if (book->isAvailable()) {
+                members[0]->borrow(book.get());
+                members[1]->returnBook(book.get());
+            }
+        }
+
+        // Display statistics
+        BookTracker::displayBookCounts();
+        Member::displayTotalMembers();
+        PremiumMember::displayTotalPremiumMembers();
     }
 };
 
 int main() {
-    // Create books
-    Book book1("The Great Gatsby", "F. Scott Fitzgerald");
-    Book book2("1984", "George Orwell");
-
-    // Create digital books
-    DigitalBook eBook1("Digital Minimalism", "Cal Newport", 2.5, "PDF");
-    DigitalBook eBook2("Atomic Habits", "James Clear", 1.8, "ePub");
-
-    // Create librarian
-    Librarian librarian1("Charles", 201);
-    librarian1.displayInfo();
-
-    // Librarian adds and removes books
-    librarian1.addBook(&book1);
-    librarian1.removeBook(&book2);
-
-    // Display book counts
-    BookTracker::displayBookCounts();
-
+    LibraryManagementSystem librarySystem;
+    librarySystem.simulateLibraryOperations();
     return 0;
 }
