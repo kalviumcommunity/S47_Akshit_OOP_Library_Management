@@ -108,7 +108,6 @@ public:
 };
 
 
-// Base class for all persons in the system
 class Person {
 protected:
     string name;
@@ -129,9 +128,15 @@ public:
     void setName(const string& n) { name = n; }
     void setID(int i) { id = i; }
 
-    // Borrow and return books functionality
+    // Polymorphic: Borrow functionality with overloaded methods
     virtual void borrow(Book* book) {
         cout << name << " is borrowing a book." << endl;
+        book->borrowBook();
+    }
+
+    // Overloaded borrow method to specify borrowing duration
+    virtual void borrow(Book* book, int days) {
+        cout << name << " is borrowing a book for " << days << " days." << endl;
         book->borrowBook();
     }
 
@@ -145,6 +150,7 @@ public:
         cout << "Name: " << name << ", ID: " << id << endl;
     }
 };
+
 
 // Derived class for regular members
 class Member : public Person {
@@ -218,41 +224,35 @@ public:
 int PremiumMember::totalPremiumMembers = 0;
 
 int main() {
-    // Create books
+   // Create books
     Book book1("The Great Gatsby", "F. Scott Fitzgerald");
-    Book book2("1984", "George Orwell");
-
-        // Create digital books
     DigitalBook eBook1("Digital Minimalism", "Cal Newport", 2.5, "PDF");
-    DigitalBook eBook2("Atomic Habits", "James Clear", 1.8, "ePub");
 
-    // Create members using hierarchical inheritance
+    // Create members
     Member member1("Alice", 101);
     PremiumMember premiumMember1("Bob", 102, 20.0);
 
-    // Display their information
+    // Test borrowing with and without duration
+    member1.borrow(&book1);
+    premiumMember1.borrow(&eBook1, 7);  // Borrow for 7 days
+
+    // Display book information after borrowing
+    cout << "\n--- Book Status After Borrowing ---" << endl;
+    book1.displayInfo();
+    eBook1.displayInfo();
+
+    // Returning books
+    member1.returnBook(&book1);
+    premiumMember1.returnBook(&eBook1);
+
+    // Display book information after returning
+    cout << "\n--- Book Status After Returning ---" << endl;
+    book1.displayInfo();
+    eBook1.displayInfo();
+
+    // Display member information
+    cout << "\n--- Members ---" << endl;
     member1.displayInfo();
     premiumMember1.displayInfo();
-
-    // Test borrowing and returning books
-    member1.borrow(&book1);
-    premiumMember1.borrow(&book2);
-    Book::displayBookCounts();
-
-    member1.returnBook(&book1);
-    premiumMember1.returnBook(&book2);
-    Book::displayBookCounts();
-
-    // Access premium features
-    premiumMember1.accessPremiumFeature();
-
-    // Display total members
-    Member::displayTotalMembers();
-    PremiumMember::displayTotalPremiumMembers();
-
-    cout << "\n--- Digital Books ---" << endl;
-    eBook1.displayInfo();
-    eBook2.displayInfo();
-
     return 0;
 }
