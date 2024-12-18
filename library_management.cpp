@@ -2,8 +2,18 @@
 #include <string>
 using namespace std;
 
+// Abstract class to define the common interface for library entities
+class LibraryEntity {
+public:
+    // Pure virtual function to enforce displayInfo implementation in derived classes
+    virtual void displayInfo() const = 0;
 
-class Book {
+    // Virtual destructor for proper cleanup in derived classes
+    virtual ~LibraryEntity() {}
+};
+
+// Base class for physical books
+class Book : public LibraryEntity {
     string title;
     string author;
     bool isAvailable;
@@ -43,8 +53,8 @@ public:
     void setAuthor(const string& a) { author = a; }
     void setAvailability(bool available) { isAvailable = available; }
 
-    // Display basic book information
-    virtual void displayInfo() {
+    // Overridden displayInfo
+    virtual void displayInfo() const override {
         cout << "Title: " << title << ", Author: " << author
              << ", Available: " << (isAvailable ? "Yes" : "No") << endl;
     }
@@ -101,14 +111,14 @@ public:
     void setFormat(const string& fmt) { format = fmt; }
 
     // Override displayInfo to include digital-specific details
-    void displayInfo() override {
+    void displayInfo() const override {
         Book::displayInfo();  // Call base class method
         cout << "File Size: " << fileSize << " MB, Format: " << format << endl;
     }
 };
 
-
-class Person {
+// Base class for all persons in the system
+class Person : public LibraryEntity {
 protected:
     string name;
     int id;
@@ -117,26 +127,16 @@ public:
     // Constructor
     Person(string n = "Unknown", int i = 0) : name(n), id(i) {}
 
-    // Destructor
+    // Virtual destructor
     virtual ~Person() {}
 
     // Common accessor methods
     string getName() const { return name; }
     int getID() const { return id; }
 
-    // Common mutator methods
-    void setName(const string& n) { name = n; }
-    void setID(int i) { id = i; }
-
-    // Polymorphic: Borrow functionality with overloaded methods
+    // Borrow and return books functionality
     virtual void borrow(Book* book) {
         cout << name << " is borrowing a book." << endl;
-        book->borrowBook();
-    }
-
-    // Overloaded borrow method to specify borrowing duration
-    virtual void borrow(Book* book, int days) {
-        cout << name << " is borrowing a book for " << days << " days." << endl;
         book->borrowBook();
     }
 
@@ -145,12 +145,11 @@ public:
         book->returnBook();
     }
 
-    // Common functionality
-    virtual void displayInfo() const {
+    // Overridden displayInfo
+    virtual void displayInfo() const override {
         cout << "Name: " << name << ", ID: " << id << endl;
     }
 };
-
 
 // Derived class for regular members
 class Member : public Person {
@@ -172,7 +171,7 @@ public:
         cout << "Total members registered: " << totalMembers << endl;
     }
 
-    // Overriding displayInfo
+    // Overridden displayInfo
     void displayInfo() const override {
         cout << "Regular Member Info - ";
         Person::displayInfo();
@@ -212,7 +211,7 @@ public:
         cout << "Total premium members registered: " << totalPremiumMembers << endl;
     }
 
-    // Overriding displayInfo
+    // Overridden displayInfo
     void displayInfo() const override {
         cout << "Premium Member Info - ";
         Person::displayInfo();
@@ -224,35 +223,25 @@ public:
 int PremiumMember::totalPremiumMembers = 0;
 
 int main() {
-   // Create books
+    // Create books
     Book book1("The Great Gatsby", "F. Scott Fitzgerald");
+    Book book2("1984", "George Orwell");
+
+    // Create digital books
     DigitalBook eBook1("Digital Minimalism", "Cal Newport", 2.5, "PDF");
+    DigitalBook eBook2("Atomic Habits", "James Clear", 1.8, "ePub");
 
     // Create members
     Member member1("Alice", 101);
     PremiumMember premiumMember1("Bob", 102, 20.0);
 
-    // Test borrowing with and without duration
-    member1.borrow(&book1);
-    premiumMember1.borrow(&eBook1, 7);  // Borrow for 7 days
+    // Display their information using polymorphism
+    LibraryEntity* entities[] = {&book1, &eBook1, &member1, &premiumMember1};
 
-    // Display book information after borrowing
-    cout << "\n--- Book Status After Borrowing ---" << endl;
-    book1.displayInfo();
-    eBook1.displayInfo();
+    for (LibraryEntity* entity : entities) {
+        entity->displayInfo();
+        cout << "-------------------" << endl;
+    }
 
-    // Returning books
-    member1.returnBook(&book1);
-    premiumMember1.returnBook(&eBook1);
-
-    // Display book information after returning
-    cout << "\n--- Book Status After Returning ---" << endl;
-    book1.displayInfo();
-    eBook1.displayInfo();
-
-    // Display member information
-    cout << "\n--- Members ---" << endl;
-    member1.displayInfo();
-    premiumMember1.displayInfo();
     return 0;
 }
