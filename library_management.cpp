@@ -1,46 +1,74 @@
 #include <iostream>
 #include <string>
+#include <vector>
 using namespace std;
 
 // Abstract class to define the common interface for library entities
 class LibraryEntity {
 public:
-    // Pure virtual function to enforce displayInfo implementation in derived classes
-    virtual void displayInfo() const = 0;
-
-    // Virtual destructor for proper cleanup in derived classes
-    virtual ~LibraryEntity() {}
+    virtual void displayInfo() const = 0; // Pure virtual function
+    virtual ~LibraryEntity() {}          // Virtual destructor
 };
 
-// Base class for physical books
+// Separate class to track book-related statistics (SRP applied here)
+class BookTracker {
+    static int totalBooksOwned;
+    static int totalAvailableBooks;
+
+public:
+    // Increment book counts
+    static void addBook() {
+        totalBooksOwned++;
+        totalAvailableBooks++;
+    }
+
+    // Decrement book counts
+    static void removeBook(bool isAvailable) {
+        totalBooksOwned--;
+        if (isAvailable)
+            totalAvailableBooks--;
+    }
+
+    // Update available count when a book is borrowed
+    static void borrowBook() {
+        if (totalAvailableBooks > 0)
+            totalAvailableBooks--;
+    }
+
+    // Update available count when a book is returned
+    static void returnBook() { totalAvailableBooks++; }
+
+    // Display book counts
+    static void displayBookCounts() {
+        cout << "Total books owned by the library: " << totalBooksOwned << endl;
+        cout << "Total available books in the library: " << totalAvailableBooks << endl;
+    }
+};
+
+// Initialize static variables for BookTracker
+int BookTracker::totalBooksOwned = 0;
+int BookTracker::totalAvailableBooks = 0;
+
+// Book class now focuses only on managing individual book details
 class Book : public LibraryEntity {
     string title;
     string author;
     bool isAvailable;
 
-    // Static variables to track total and available books
-    static int totalBooksOwned;
-    static int totalAvailableBooks;
-
 public:
     // Default constructor
     Book() : title("Unknown"), author("Unknown"), isAvailable(true) {
-        totalBooksOwned++;
-        totalAvailableBooks++;
+        BookTracker::addBook();
     }
 
     // Parameterized constructor
     Book(string t, string a) : title(t), author(a), isAvailable(true) {
-        totalBooksOwned++;
-        totalAvailableBooks++;
+        BookTracker::addBook();
     }
 
     // Destructor
-    virtual ~Book() { // Virtual destructor for proper cleanup
-        if (isAvailable) {
-            totalAvailableBooks--;
-        }
-        totalBooksOwned--;
+    virtual ~Book() {
+        BookTracker::removeBook(isAvailable);
     }
 
     // Accessors
@@ -51,19 +79,12 @@ public:
     // Mutators
     void setTitle(const string& t) { title = t; }
     void setAuthor(const string& a) { author = a; }
-    void setAvailability(bool available) { isAvailable = available; }
-
-    // Overridden displayInfo
-    virtual void displayInfo() const override {
-        cout << "Title: " << title << ", Author: " << author
-             << ", Available: " << (isAvailable ? "Yes" : "No") << endl;
-    }
 
     // Borrow a book
     virtual void borrowBook() {
         if (isAvailable) {
             isAvailable = false;
-            totalAvailableBooks--;
+            BookTracker::borrowBook();
             cout << title << " has been borrowed. :) " << endl;
         } else {
             cout << title << " is currently unavailable. :( " << endl;
@@ -74,67 +95,50 @@ public:
     virtual void returnBook() {
         if (!isAvailable) {
             isAvailable = true;
-            totalAvailableBooks++;
+            BookTracker::returnBook();
             cout << title << " has been returned. :) " << endl;
         } else {
             cout << title << " was not borrowed and is already available. :) " << endl;
         }
     }
 
-    // Static member function to display book counts
-    static void displayBookCounts() {
-        cout << "Total books owned by the library: " << totalBooksOwned << endl;
-        cout << "Total available books in the library: " << totalAvailableBooks << endl;
+    // Override displayInfo
+    virtual void displayInfo() const override {
+        cout << "Title: " << title << ", Author: " << author
+             << ", Available: " << (isAvailable ? "Yes" : "No") << endl;
     }
 };
 
-// Initialize static variables
-int Book::totalBooksOwned = 0;
-int Book::totalAvailableBooks = 0;
-
 // Derived class for digital books
 class DigitalBook : public Book {
-    double fileSize;  // in MB
-    string format;    // e.g., PDF, ePub
+    double fileSize;
+    string format;
 
 public:
-    // Parameterized constructor
     DigitalBook(string t, string a, double fs, string fmt)
         : Book(t, a), fileSize(fs), format(fmt) {}
 
-    // Accessors
-    double getFileSize() const { return fileSize; }
-    string getFormat() const { return format; }
-
-    // Mutators
-    void setFileSize(double fs) { fileSize = fs; }
-    void setFormat(const string& fmt) { format = fmt; }
-
-    // Override displayInfo to include digital-specific details
     void displayInfo() const override {
-        Book::displayInfo();  // Call base class method
+        Book::displayInfo();
         cout << "File Size: " << fileSize << " MB, Format: " << format << endl;
     }
 };
 
-// Base class for all persons in the system
+
 class Person : public LibraryEntity {
 protected:
     string name;
     int id;
 
 public:
-    // Constructor
     Person(string n = "Unknown", int i = 0) : name(n), id(i) {}
 
-    // Virtual destructor
     virtual ~Person() {}
 
-    // Common accessor methods
-    string getName() const { return name; }
-    int getID() const { return id; }
+    virtual void displayInfo() const override {
+        cout << "Name: " << name << ", ID: " << id << endl;
+    }
 
-    // Borrow and return books functionality
     virtual void borrow(Book* book) {
         cout << name << " is borrowing a book." << endl;
         book->borrowBook();
@@ -144,82 +148,51 @@ public:
         cout << name << " is returning a book." << endl;
         book->returnBook();
     }
-
-    // Overridden displayInfo
-    virtual void displayInfo() const override {
-        cout << "Name: " << name << ", ID: " << id << endl;
-    }
 };
 
-// Derived class for regular members
 class Member : public Person {
     static int totalMembers;
 
 public:
-    // Constructor
-    Member(string n = "Unknown", int i = 0) : Person(n, i) {
-        totalMembers++;
-    }
+    Member(string n = "Unknown", int i = 0) : Person(n, i) { totalMembers++; }
 
-    // Destructor
-    ~Member() {
-        totalMembers--;
-    }
+    ~Member() { totalMembers--; }
 
-    // Static method to display total members
-    static void displayTotalMembers() {
-        cout << "Total members registered: " << totalMembers << endl;
-    }
-
-    // Overridden displayInfo
     void displayInfo() const override {
         cout << "Regular Member Info - ";
         Person::displayInfo();
     }
+
+    static void displayTotalMembers() {
+        cout << "Total members registered: " << totalMembers << endl;
+    }
 };
 
-// Initialize static member
 int Member::totalMembers = 0;
 
-// Derived class for premium members
 class PremiumMember : public Person {
     static int totalPremiumMembers;
     double subscriptionFee;
 
 public:
-    // Constructor
     PremiumMember(string n = "Unknown", int i = 0, double fee = 0.0)
         : Person(n, i), subscriptionFee(fee) {
         totalPremiumMembers++;
     }
 
-    // Destructor
-    ~PremiumMember() {
-        totalPremiumMembers--;
-    }
+    ~PremiumMember() { totalPremiumMembers--; }
 
-    // Accessor for subscription fee
-    double getSubscriptionFee() const { return subscriptionFee; }
-
-    // Premium privilege
-    void accessPremiumFeature() {
-        cout << name << " is accessing premium features with subscription fee: $" << subscriptionFee << endl;
-    }
-
-    // Static method to display total premium members
-    static void displayTotalPremiumMembers() {
-        cout << "Total premium members registered: " << totalPremiumMembers << endl;
-    }
-
-    // Overridden displayInfo
     void displayInfo() const override {
         cout << "Premium Member Info - ";
         Person::displayInfo();
         cout << "Subscription Fee: $" << subscriptionFee << endl;
     }
+
+    static void displayTotalPremiumMembers() {
+        cout << "Total premium members registered: " << totalPremiumMembers << endl;
+    }
 };
 
-// Initialize static member
 int PremiumMember::totalPremiumMembers = 0;
 
 int main() {
@@ -231,17 +204,12 @@ int main() {
     DigitalBook eBook1("Digital Minimalism", "Cal Newport", 2.5, "PDF");
     DigitalBook eBook2("Atomic Habits", "James Clear", 1.8, "ePub");
 
-    // Create members
-    Member member1("Alice", 101);
-    PremiumMember premiumMember1("Bob", 102, 20.0);
+    // Borrow and return books
+    book1.borrowBook();
+    book1.returnBook();
 
-    // Display their information using polymorphism
-    LibraryEntity* entities[] = {&book1, &eBook1, &member1, &premiumMember1};
-
-    for (LibraryEntity* entity : entities) {
-        entity->displayInfo();
-        cout << "-------------------" << endl;
-    }
+    // Display book counts using BookTracker
+    BookTracker::displayBookCounts();
 
     return 0;
 }
