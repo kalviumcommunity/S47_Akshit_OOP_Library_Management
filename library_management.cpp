@@ -3,7 +3,9 @@
 #include <string>
 using namespace std;
 
+// Class representing a book in the library
 class Book {
+    // Private members encapsulate the details of the book
     string title;
     string author;
     bool isAvailable;
@@ -13,13 +15,13 @@ class Book {
     static int totalAvailableBooks;
 
 public:
-    // Constructor
+    // Constructor to initialize a book with a title and author
     Book(string t, string a) : title(t), author(a), isAvailable(true) {
         totalBooksOwned++;
         totalAvailableBooks++;
     }
 
-    // Destructor to decrease the total count when a book object is destroyed
+    // Destructor to decrease the total count when a book is destroyed
     ~Book() {
         if (isAvailable) {
             totalAvailableBooks--;
@@ -27,23 +29,23 @@ public:
         totalBooksOwned--;
     }
 
-    // Accessors (Getters)
+    // Public getter methods for reading book details
     string getTitle() const { return title; }
     string getAuthor() const { return author; }
     bool getIsAvailable() const { return isAvailable; }
 
-    // Mutators (Setters)
+    // Public setter methods for updating book details
     void setTitle(const string& t) { title = t; }
     void setAuthor(const string& a) { author = a; }
     void setAvailability(bool available) { isAvailable = available; }
 
-    // Function to display book information
+    // Public method to display book information
     void displayInfo() {
         cout << "Title: " << getTitle() << ", Author: " << getAuthor()
              << ", Available: " << (getIsAvailable() ? "Yes" : "No") << endl;
     }
 
-    // Function to borrow a book
+    // Method for borrowing a book, showing abstraction of the borrowing process
     void borrowBook() {
         if (getIsAvailable()) {
             setAvailability(false);
@@ -54,7 +56,7 @@ public:
         }
     }
 
-    // Function to return a borrowed book
+    // Method for returning a borrowed book
     void returnBook() {
         if (!getIsAvailable()) {
             setAvailability(true);
@@ -65,18 +67,20 @@ public:
         }
     }
 
-    // Static member function to display book counts
+    // Static method to display the total count of books
     static void displayBookCounts() {
         cout << "Total books owned by the library: " << totalBooksOwned << endl;
         cout << "Total available books in the library: " << totalAvailableBooks << endl;
     }
 };
 
-// Initialize static variables
+// Initialize static variables outside the class
 int Book::totalBooksOwned = 0;
 int Book::totalAvailableBooks = 0;
 
+// Class representing a member of the library
 class Member {
+    // Private members encapsulate the member details
     string name;
     int memberID;
 
@@ -84,7 +88,7 @@ class Member {
     static int totalMembers;
 
 public:
-    // Constructor
+    // Constructor to initialize a member
     Member(string n, int id) : name(n), memberID(id) {
         totalMembers++;
     }
@@ -94,42 +98,42 @@ public:
         totalMembers--;
     }
 
-    // Accessors (Getters)
+    // Public getter methods for member details
     string getName() const { return name; }
     int getMemberID() const { return memberID; }
 
-    // Mutators (Setters)
+    // Public setter methods for member details
     void setName(const string& n) { name = n; }
     void setMemberID(int id) { memberID = id; }
 
-    // Function to display member information
+    // Public method to display member information
     void displayMemberInfo() {
         cout << "Member Name: Hello! " << getName() << ", Member ID: " << getMemberID() << endl;
     }
 
-    // Function for member to borrow a book
+    // Method for a member to borrow a book
     void borrow(Book* book) {
         cout << getName() << " is borrowing a book." << endl;
         book->borrowBook();
     }
 
-    // Function for member to return a book
+    // Method for a member to return a book
     void returnBook(Book* book) {
         cout << getName() << " is returning a book." << endl;
         book->returnBook();
     }
 
-    // Static member function to display total members
+    // Static method to display total members
     static void displayTotalMembers() {
         cout << "Total members registered: " << totalMembers << endl;
     }
 };
 
-// Initialize static variable
+// Initialize static variable outside the class
 int Member::totalMembers = 0;
 
 int main() {
-    // Dynamically allocate an array of books
+    // Creating an array of books using dynamic allocation
     Book* library = new Book[3]{
         Book("Harry Potter and the Philosopher's Stone", "J.K. Rowling"),
         Book("The Hobbit", "J.R.R. Tolkien"),
@@ -144,7 +148,7 @@ int main() {
     // Display the total number of available and owned books
     Book::displayBookCounts();
 
-    // Dynamically allocate members
+    // Creating library members
     Member* member1 = new Member("Akshit", 101);
     Member* member2 = new Member("Aki", 102);
 
@@ -158,7 +162,7 @@ int main() {
     member1->borrow(&library[0]);
     Book::displayBookCounts();
 
-    // Try borrowing the same book again
+    // Member2 tries to borrow the same book
     member2->borrow(&library[0]);
 
     // Member2 borrows another book
@@ -169,11 +173,10 @@ int main() {
     member1->returnBook(&library[0]);
     Book::displayBookCounts();
 
-    // Free memory
+    // Free dynamically allocated memory
     delete[] library;
     delete member1;
     delete member2;
 
     return 0;
 }
-
